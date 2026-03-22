@@ -91,7 +91,7 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -947,6 +947,29 @@ require('lazy').setup({
     },
   },
 })
+
+-- Fix for shell commands in Windows (PowerShell 7)
+if vim.fn.has 'win32' == 1 then
+  vim.opt.shell = 'pwsh.exe'
+  -- We set TERM=dumb and NO_COLOR=1 to strip the ANSI messy characters
+  vim.opt.shellcmdflag =
+    [[-NoLogo -ExecutionPolicy RemoteSigned -Command $env:TERM='dumb'; [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;]]
+  vim.opt.shellredir = '2>&1 | Out-File -Encoding UTF8 %s; stop'
+  vim.opt.shellpipe = '2>&1 | Out-File -Encoding UTF8 %s; stop'
+  vim.opt.shellquote = ''
+  vim.opt.shellxquote = ''
+end
+
+-- 1. Use Esc Esc to exit terminal mode (instead of Ctrl-\ Ctrl-n)
+vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
+
+-- 2. Open a terminal in a small horizontal split at the bottom
+vim.keymap.set('n', '<leader>st', function()
+  vim.cmd.vnew() -- or vim.cmd.split() for horizontal
+  vim.cmd.term()
+  vim.cmd.wincmd 'J' -- Move it to the bottom
+  vim.api.nvim_win_set_height(0, 15) -- Set height to 15 lines
+end, { desc = '[S]tart [T]erminal' })
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
